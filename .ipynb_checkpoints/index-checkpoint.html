@@ -26,8 +26,8 @@
         async function doRollback() {
             const params = new URLSearchParams(window.location.search);
             const action = params.get('action');
-            const token = params.get('id');
-            const apiUrl = `https://unywsopjpnerbgmgqqdg.supabase.co/functions/v1/monthly-overdue-updater/rollback/${action}?id=${token}`;
+            const token = params.get('token');
+            const apiUrl = `https://unywsopjpnerbgmgqqdg.supabase.co/functions/v1/monthly-overdue-updater/rollback/${action}?token=${token}`;
 
             try {
                 const res = await fetch(apiUrl, { method: 'POST' });
