@@ -6,136 +6,124 @@
     <title>SGCC | 能源数据回滚终端</title>
     <style>
         :root {
-            --sgcc-green: #00ffa2; /* 霓虹亮绿 */
-            --sgcc-dark: #0a1917;  /* 深墨绿背景 */
-            --panel-bg: rgba(16, 38, 34, 0.85);
+            --sgcc-neon: #00ffa2; /* 赛博霓虹绿 */
+            --sgcc-dark: #050d0c;  /* 极深背景 */
+            --error-red: #ff3e3e;  /* 警报红 */
         }
 
         body {
             background-color: var(--sgcc-dark);
+            /* 科技感背景网格 */
             background-image: 
-                radial-gradient(circle at 50% 50%, rgba(0, 133, 115, 0.2) 0%, transparent 80%),
-                linear-gradient(rgba(0, 255, 162, 0.05) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(0, 255, 162, 0.05) 1px, transparent 1px);
-            background-size: 100% 100%, 30px 30px, 30px 30px;
-            font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
+                radial-gradient(circle at 50% 50%, rgba(0, 133, 115, 0.15) 0%, transparent 80%),
+                linear-gradient(rgba(0, 255, 162, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 255, 162, 0.03) 1px, transparent 1px);
+            background-size: 100% 100%, 25px 25px, 25px 25px;
+            font-family: "Consolas", "Monaco", "Microsoft YaHei", monospace;
             margin: 0;
             display: flex;
             justify-content: center;
             align-items: center;
             height: 100vh;
-            overflow: hidden;
             color: white;
+            overflow: hidden;
         }
 
         .terminal-card {
-            background: var(--panel-bg);
+            background: rgba(10, 25, 23, 0.9);
             padding: 50px;
-            border: 1px solid var(--sgcc-green);
-            border-radius: 4px;
+            border: 1px solid var(--sgcc-neon);
+            border-radius: 2px;
             position: relative;
             text-align: center;
-            box-shadow: 0 0 50px rgba(0, 255, 162, 0.2), inset 0 0 15px rgba(0, 255, 162, 0.1);
-            width: 380px;
-            backdrop-filter: blur(10px);
+            box-shadow: 0 0 40px rgba(0, 255, 162, 0.15);
+            width: 360px;
+            backdrop-filter: blur(8px);
         }
 
-        /* 装饰角 */
-        .terminal-card::before, .terminal-card::after {
-            content: '';
-            position: absolute;
-            width: 20px;
-            height: 20px;
-            border: 2px solid var(--sgcc-green);
-        }
-        .terminal-card::before { top: -5px; left: -5px; border-right: 0; border-bottom: 0; }
-        .terminal-card::after { bottom: -5px; right: -5px; border-left: 0; border-top: 0; }
-
-        /* SVG Logo 霓虹化 */
-        .logo-box {
-            filter: drop-shadow(0 0 8px var(--sgcc-green));
-            margin-bottom: 30px;
-        }
-
-        .status-scanner {
+        /* 顶部扫描线 */
+        .scanner {
             width: 100%;
-            height: 2px;
-            background: var(--sgcc-green);
-            box-shadow: 0 0 15px var(--sgcc-green);
+            height: 1px;
+            background: var(--sgcc-neon);
+            box-shadow: 0 0 10px var(--sgcc-neon);
             position: absolute;
             left: 0;
             top: 0;
-            animation: scan 3s ease-in-out infinite;
-            opacity: 0.5;
+            animation: scan 4s linear infinite;
         }
 
-        @keyframes scan {
-            0% { top: 0% }
-            50% { top: 100% }
-            100% { top: 0% }
+        @keyframes scan { 0% { top: 0% } 100% { top: 100% } }
+
+        /* Logo 样式：将其滤镜化为霓虹绿 */
+        .logo-container img {
+            width: 220px;
+            /* 关键：将任何颜色的图片转为霓虹绿发光效果 */
+            filter: drop-shadow(0 0 5px var(--sgcc-neon)) brightness(1.2) hue-rotate(90deg);
+            margin-bottom: 25px;
         }
 
         .spinner {
             border: 2px solid rgba(0, 255, 162, 0.1);
-            border-top: 2px solid var(--sgcc-green);
+            border-top: 2px solid var(--sgcc-neon);
             border-radius: 50%;
-            width: 50px;
-            height: 50px;
-            animation: spin 1s linear infinite;
+            width: 45px;
+            height: 45px;
+            animation: spin 0.8s cubic-bezier(0.5, 0.1, 0.4, 0.9) infinite;
             margin: 20px auto;
         }
 
         @keyframes spin { 100% { transform: rotate(360deg); } }
 
-        #title {
-            font-size: 1.4rem;
-            letter-spacing: 4px;
-            margin: 20px 0 10px;
-            text-transform: uppercase;
+        h1 {
+            font-size: 1.2rem;
+            letter-spacing: 5px;
+            margin: 15px 0;
+            color: var(--sgcc-neon);
+            text-shadow: 0 0 10px var(--sgcc-neon);
         }
 
         #msg {
-            color: rgba(255, 255, 255, 0.7);
-            font-size: 0.9rem;
+            color: rgba(0, 255, 162, 0.7);
+            font-size: 0.85rem;
             line-height: 1.6;
+            min-height: 50px;
         }
 
-        .success-icon {
+        /* 状态图标 */
+        .status-icon {
             display: none;
-            font-size: 60px;
-            color: var(--sgcc-green);
-            text-shadow: 0 0 20px var(--sgcc-green);
+            font-size: 40px;
+            margin-bottom: 10px;
         }
 
-        .footer-tag {
-            margin-top: 40px;
+        .footer {
+            margin-top: 35px;
             font-size: 10px;
-            color: var(--sgcc-green);
-            opacity: 0.6;
-            letter-spacing: 2px;
+            color: rgba(0, 255, 162, 0.4);
+            letter-spacing: 3px;
+            border-top: 1px solid rgba(0, 255, 162, 0.1);
+            padding-top: 15px;
         }
     </style>
 </head>
 <body>
     <div class="terminal-card">
-        <div id="scanner" class="status-scanner"></div>
+        <div class="scanner"></div>
         
-        <div class="logo-box">
-            <!-- 插入state.grid.svg -->
-            <svg href="./state-grid.svg"></svg>
-            <svg width="200" height="60" viewBox="0 0 450 120">
-                <text x="110" y="75" font-family="Arial Black" font-size="52" fill="#00ffa2">STATE GRID</text>
-                <text x="110" y="105" font-family="SimSun" font-size="24" fill="#00ffa2" style="letter-spacing:8px">国家电网</text>
-            </svg>
+        <div class="logo-container">
+            <img src="./state-grip.svg" alt="SGCC LOGO" onerror="this.style.display='none'; document.getElementById('alt-logo').style.display='block';">
+            <div id="alt-logo" style="display:none; color:var(--sgcc-neon); font-weight:bold; letter-spacing:5px; margin-bottom:20px;">STATE GRID</div>
         </div>
 
         <div id="loader" class="spinner"></div>
-        <div id="icon" class="success-icon">ACCESS GRANTED</div>
+        <div id="icon_success" class="status-icon" style="color: var(--sgcc-neon);">[ ACCESS GRANTED ]</div>
+        <div id="icon_error" class="status-icon" style="color: var(--error-red);">[ AUTH_FAILURE ]</div>
         
-        <h1 id="title">正在解密凭证...</h1>
-        <p id="msg">SYSTEM: 等待后端验证序列码并执行逻辑回退</p>
+        <h1 id="title">INITIALIZING...</h1>
+        <p id="msg">> 正在请求远程节点验证加密序列...</p>
 
-        <div class="footer-tag">ENERGY DATA RECOVERY TERMINAL v2.0</div>
+        <div class="footer">PROTOCOL: ENERGY_DATA_V2.0_RECOVERY</div>
     </div>
 
     <script>
@@ -143,30 +131,47 @@
             const params = new URLSearchParams(window.location.search);
             const action = params.get('action');
             const id = params.get('id');
-            const apiUrl = `https://unywsopjpnerbgmgqqdg.supabase.co/functions/v1/monthly-overdue-updater/rollback/${action}?id=${id}`;
+            const titleEl = document.getElementById('title');
+            const msgEl = document.getElementById('msg');
+            const loader = document.getElementById('loader');
+
+            if (!id || !action) {
+                showError("PARAM_MISSING", "错误: 未检测到有效序列码或操作参数。");
+                return;
+            }
 
             try {
-                const res = await fetch(apiUrl, { method: 'GET' });
+                // 模拟解密过程增加科幻感
+                await new Promise(r => setTimeout(r, 1200));
+                
+                const apiUrl = `https://unywsopjpnerbgmgqqdg.supabase.co/functions/v1/monthly-overdue-updater/rollback/${action}?id=${id}`;
+                const res = await fetch(apiUrl);
                 const data = await res.json();
                 
                 if (data.status === 'success') {
-                    document.getElementById('loader').style.display = 'none';
-                    document.getElementById('scanner').style.display = 'none';
-                    document.getElementById('icon').style.display = 'block';
-                    document.getElementById('title').innerText = '回滚已完成';
-                    document.getElementById('msg').innerText = `指令执行成功。数据库已回退 ${data.affected_rows} 条记录，序列码已销毁。`;
+                    loader.style.display = 'none';
+                    document.getElementById('icon_success').style.display = 'block';
+                    titleEl.innerText = "ROLLBACK COMPLETE";
+                    msgEl.innerHTML = `> 校验通过。<br>> 数据库记录已回滚: ${data.affected_rows} ROWS<br>> 凭证已从集群中永久销毁。`;
                 } else {
-                    throw new Error(data.message || '凭证验证失败');
+                    throw new Error(data.message || "DATABASE_REJECTED");
                 }
             } catch (err) {
-                document.getElementById('loader').style.display = 'none';
-                document.getElementById('title').innerText = 'ERROR';
-                document.getElementById('title').style.color = '#ff4d4d';
-                document.getElementById('msg').innerText = '原因: ' + err.message;
+                showError("DECRYPTION_FAILED", err.message);
             }
         }
-        // 增加一点科幻感的延迟启动
-        setTimeout(runRollback, 1500);
+
+        function showError(code, detail) {
+            document.getElementById('loader').style.display = 'none';
+            document.getElementById('icon_error').style.display = 'block';
+            const titleEl = document.getElementById('title');
+            titleEl.innerText = code;
+            titleEl.style.color = 'var(--error-red)';
+            titleEl.style.textShadow = '0 0 10px var(--error-red)';
+            document.getElementById('msg').innerText = `> 系统终止: ${detail}`;
+        }
+
+        window.onload = runRollback;
     </script>
 </body>
 </html>
