@@ -2,189 +2,115 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Terminal - SGCC_ROOT</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+    <title>SGCC_RECOVERY_NODE_762</title>
     <style>
-        :root {
-            --terminal-green: #00ffa2;
-            --terminal-bg: #050d0c;
-            --error-red: #ff3e3e;
-        }
-
-        * { box-sizing: border-box; }
-
-        body {
-            background-color: var(--terminal-bg);
-            color: var(--terminal-green);
-            font-family: "Courier New", Courier, monospace;
-            margin: 0;
-            padding: 20px;
-            height: 100vh;
-            width: 100vw;
-            display: flex;
-            flex-direction: column;
-            font-size: 18px; /* 字体加大 */
-            line-height: 1.4;
-            overflow: hidden;
-        }
-
-        /* 扫描线效果 */
-        body::before {
-            content: " ";
-            display: block;
-            position: absolute;
-            top: 0; left: 0; bottom: 0; right: 0;
-            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
-            z-index: 2;
-            background-size: 100% 2px, 3px 100%;
-            pointer-events: none;
-        }
-
-        #console {
-            flex-grow: 1;
-            overflow-y: auto;
-            white-space: pre-wrap;
-            word-break: break-all;
-        }
-
-        .input-line {
-            display: flex;
-            align-items: center;
-            margin-top: 10px;
-        }
-
-        #prompt {
-            margin-right: 10px;
-            white-space: nowrap;
-            color: #fff;
-        }
-
-        #userInput {
-            background: transparent;
-            border: none;
-            color: var(--terminal-green);
-            font-family: inherit;
-            font-size: inherit;
-            outline: none;
-            flex-grow: 1;
-            caret-shape: block;
-        }
-
-        .system-msg { color: #888; }
-        .success { color: var(--terminal-green); text-shadow: 0 0 5px var(--terminal-green); }
-        .error { color: var(--error-red); }
+        :root { --green: #00ffa2; --dim-green: rgba(0, 255, 162, 0.6); --bg: #030807; }
+        body { background: var(--bg); color: var(--green); font-family: "Lucida Console", Monaco, monospace; margin: 0; padding: 15px; font-size: 16px; overflow: hidden; }
         
-        /* 隐藏滚动条 */
+        /* 扫描线和噪点 */
+        .crt-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03)); background-size: 100% 3px, 3px 100%; pointer-events: none; z-index: 100; }
+        
+        #output { height: calc(100vh - 60px); overflow-y: auto; white-space: pre-wrap; word-break: break-all; scroll-behavior: smooth; }
+        .prompt-line { display: flex; align-items: center; border-top: 1px solid rgba(0,255,162,0.1); padding-top: 10px; }
+        input { background: transparent; border: none; color: #fff; font-family: inherit; font-size: 18px; outline: none; flex: 1; caret-color: var(--green); }
+        
+        .sys-info { color: #555; font-size: 12px; }
+        .warn { color: #fff; font-weight: bold; background: #c0392b; padding: 0 5px; }
+        .cmd-error { color: #ff3e3e; }
+        
         ::-webkit-scrollbar { width: 0; }
-
-        .logo-ascii {
-            font-size: 10px;
-            line-height: 1;
-            margin-bottom: 20px;
-            opacity: 0.7;
-        }
     </style>
 </head>
-<body onclick="document.getElementById('userInput').focus()">
-
-<div id="console">
-<div class="logo-ascii">
- ██████  ██████  ██████  ██████
- ██      ██      ██      ██    
- █████   ██ ███  ██      ██    
-      ██ ██   ██ ██      ██    
- ██████   ██████  ██████  ██████
- -------------------------------
- [ ENERGY DATA RECOVERY SYSTEM ]
-</div>
-<div class="system-msg">Last login: <span id="time"></span> on ttys001</div>
-<div class="system-msg">Security Level: Level 4 (Classified)</div>
-<br>
-<div>> ⚠ 警告: 检测到数据库回退请求。</div>
-<div>> 验证要求: 输入确认短句方可获得执行权限。</div>
-<div style="color:#fff;">> 请输入: <span style="text-decoration: underline;">我已确认撤销自动上传的数据</span></div>
+<body onclick="document.getElementById('cli').focus()">
+    <div class="crt-overlay"></div>
+    <div id="output"><div class="sys-info">
+[BOOT] SGCC_SECURE_OS v4.2.0-STABLE
+[INFO] NODE_LOCATION: SG-NUS-CLUSTER
+[INFO] ENCRYPTION: AES-256-GCM ACTIVE
+--------------------------------------------------</div>
+> ⚠ <span class="warn">CRITICAL ACCESS</span>
+> 系统已进入三级数据恢复状态。
+> 正在检索本次更新生成的唯一授权序列...
+> 验证要求: 输入下列指令以确认撤销行为:
+> "<span style="color:#fff">我已确认撤销自动上传的数据</span>"
 </div>
 
-<div class="input-line" id="inputContainer">
-    <span id="prompt"></span>
-    <input type="text" id="userInput" autofocus spellcheck="false" autocomplete="off">
-</div>
+    <div class="prompt-line">
+        <span id="prefix" style="color:#fff; margin-right:8px;"></span>
+        <input type="text" id="cli" autofocus autocomplete="off" spellcheck="false">
+    </div>
 
 <script>
-    const TARGET_PHRASE = "我已确认撤销自动上传的数据";
-    const consoleEl = document.getElementById('console');
-    const userInput = document.getElementById('userInput');
-    const promptEl = document.getElementById('prompt');
-    const timeEl = document.getElementById('time');
+    const output = document.getElementById('output');
+    const cli = document.getElementById('cli');
+    const prefix = document.getElementById('prefix');
+    const TARGET = "我已确认撤销自动上传的数据";
 
-    // 模拟不同系统的 Prompt 和 报错信息
-    const isWin = navigator.platform.toUpperCase().indexOf('WIN') > -1;
-    const promptChar = isWin ? "C:\\Users\\Admin> " : "root@SGCC-GATEWAY ~ % ";
-    const errorMsg = isWin ? "'{cmd}' 不是内部或外部命令，也不是可运行的程序或批处理文件。" : "zsh: command not found: {cmd}";
+    // 动态模拟环境
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    const platformPrefix = isMobile ? "sgcc@remote_node:~ $" : "C:\\SYS\\SGCC\\DATA>";
+    const notFound = isMobile ? "zsh: command not found: " : "不是内部或外部命令，也不是可运行的程序: ";
+    prefix.innerText = platformPrefix;
 
-    promptEl.innerText = promptChar;
-    timeEl.innerText = new Date().toLocaleString();
-
-    function print(text, className = "") {
-        const div = document.createElement('div');
-        div.className = className;
-        div.innerText = text;
-        consoleEl.appendChild(div);
-        consoleEl.scrollTop = consoleEl.scrollHeight;
+    function log(msg, type = "") {
+        const line = document.createElement('div');
+        if(type) line.className = type;
+        line.innerHTML = msg;
+        output.appendChild(line);
+        output.scrollTop = output.scrollHeight;
     }
 
-    userInput.addEventListener('keydown', async (e) => {
+    cli.addEventListener('keydown', async (e) => {
         if (e.key === 'Enter') {
-            const val = userInput.value.trim();
-            print(promptChar + val);
-            userInput.value = "";
+            const cmd = cli.value.trim();
+            log(`${platformPrefix} ${cmd}`);
+            cli.value = "";
 
-            if (val === TARGET_PHRASE) {
-                await executeRollback();
-            } else if (val === "") {
-                // Do nothing
-            } else {
-                print(errorMsg.replace("{cmd}", val), "error");
+            if (cmd === TARGET) {
+                await runSequence();
+            } else if (cmd !== "") {
+                log(`${notFound}${cmd}`, "cmd-error");
             }
         }
     });
 
-    async function executeRollback() {
-        userInput.disabled = true;
-        document.getElementById('inputContainer').style.display = "none";
+    async function runSequence() {
+        cli.disabled = true;
+        log("\n[SYSTEM] 身份验证通过。正在初始化回滚序列...");
         
-        print("\n> [CRITICAL] 权限验证通过...");
-        print("> 正在建立对等连接 (P2P)...");
+        // 模拟打字机进度
+        const steps = [
+            "> 正在请求令牌授权...",
+            "> 正在连接 Supabase 边缘节点...",
+            "> 正在穿透安全防火墙...",
+            "> 发送指令: RPC_CALL_ROLLBACK_ST_ND"
+        ];
         
-        await new Promise(r => setTimeout(r, 800));
-        
+        for(let step of steps) {
+            await new Promise(r => setTimeout(r, 600));
+            log(step);
+        }
+
         const params = new URLSearchParams(window.location.search);
         const action = params.get('action');
         const id = params.get('id');
 
-        if (!id || !action) {
-            print("> ERROR: 凭证解析失败。执行终止。", "error");
-            return;
-        }
-
         try {
-            print("> 发送 RPC 指令至集群...");
-            const apiUrl = `https://unywsopjpnerbgmgqqdg.supabase.co/functions/v1/monthly-overdue-updater/rollback/${action}?id=${id}`;
-            const res = await fetch(apiUrl);
+            const res = await fetch(`https://unywsopjpnerbgmgqqdg.supabase.co/functions/v1/monthly-overdue-updater/rollback/${action}?id=${id}`);
             const data = await res.json();
-            
+
             if (data.status === 'success') {
-                print("\n[ ACCESS GRANTED ]", "success");
-                print(`> 指令执行成功。`);
-                print(`> 影响行数: ${data.affected_rows}`);
-                print(`> 正在同步集群状态... OK`);
-                print(`> 本次 Session 已安全结束。`);
+                log("\n--------------------------------------------------");
+                log("[ SUCCESS ] 指令已生效", "success");
+                log(`> 数据库变动: ${data.affected_rows} 行已恢复`);
+                log(`> 授权码 ID_${id.split('-')[0]} 已作废`);
+                log("--------------------------------------------------");
             } else {
-                throw new Error(data.message || "REJECTED_BY_HOST");
+                throw new Error(data.message);
             }
         } catch (err) {
-            print("\n[ FAILED ]", "error");
-            print(`> 执行异常: ${err.message}`, "error");
+            log(`\n[ FATAL ERROR ] 执行失败: ${err.message}`, "cmd-error");
         }
     }
 </script>
