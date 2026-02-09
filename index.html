@@ -29,73 +29,126 @@
             border: 1px solid rgba(0, 255, 162, 0.3);
             position: relative;
             text-align: center;
-            width: 320px;
+            width: 340px;
             box-shadow: 0 0 30px rgba(0, 0, 0, 0.5);
         }
 
-        /* 顶部装饰条 */
         .terminal-header {
             position: absolute; top: 0; left: 0; width: 100%; height: 4px;
             background: repeating-linear-gradient(90deg, var(--sgcc-neon), var(--sgcc-neon) 10px, transparent 10px, transparent 20px);
             opacity: 0.6;
         }
 
-        /* 强制着色 SVG Logo */
         .logo-box {
-            width: 180px; height: 60px; margin: 0 auto 30px;
+            width: 180px; height: 60px; margin: 0 auto 25px;
             background-color: var(--sgcc-neon);
-            /* 将图片作为遮罩，这样背景色(荧光绿)就会填充图片形状 */
             -webkit-mask: url('./state-grid.svg') no-repeat center / contain;
             mask: url('./state-grid.svg') no-repeat center / contain;
             filter: drop-shadow(0 0 8px var(--sgcc-neon));
         }
 
-        .spinner {
-            width: 30px; height: 30px; border: 1px solid var(--sgcc-neon);
-            border-top-color: transparent; border-radius: 50%;
-            margin: 20px auto; animation: spin 0.8s linear infinite;
-        }
-
-        @keyframes spin { 100% { transform: rotate(360deg); } }
-
-        /* 状态显示优化 */
+        /* 状态显示 */
         .status-tag {
             display: inline-block; padding: 4px 12px; font-size: 10px; font-weight: bold;
             letter-spacing: 2px; border: 1px solid; margin-bottom: 20px; text-transform: uppercase;
         }
         .tag-success { color: var(--sgcc-neon); border-color: var(--sgcc-neon); background: rgba(0, 255, 162, 0.1); }
         .tag-error { color: var(--error-red); border-color: var(--error-red); background: rgba(255, 62, 62, 0.1); }
+        .tag-warn { color: #f39c12; border-color: #f39c12; background: rgba(243, 156, 18, 0.1); }
 
-        h1 { font-size: 16px; letter-spacing: 3px; color: #fff; margin: 10px 0; font-weight: normal; }
-        #msg { color: var(--terminal-green); font-size: 11px; line-height: 1.8; text-align: left; padding: 15px; background: rgba(0,0,0,0.3); border-radius: 4px; min-height: 60px; }
+        h1 { font-size: 14px; letter-spacing: 2px; color: #fff; margin: 10px 0; font-weight: normal; }
+        #msg { 
+            color: var(--terminal-green); font-size: 11px; line-height: 1.6; text-align: left; 
+            padding: 15px; background: rgba(0,0,0,0.5); border: 1px solid rgba(0, 255, 162, 0.1);
+            border-radius: 2px; min-height: 50px; margin-bottom: 20px;
+        }
 
+        /* 输入确认区 */
+        #confirm-area { display: block; }
+        .cyber-input {
+            width: 100%; background: transparent; border: none; border-bottom: 1px solid var(--sgcc-neon);
+            color: var(--sgcc-neon); font-family: inherit; font-size: 11px; padding: 8px 0;
+            outline: none; margin-bottom: 15px;
+        }
+        .cyber-btn {
+            background: transparent; border: 1px solid var(--sgcc-neon); color: var(--sgcc-neon);
+            padding: 8px 20px; font-size: 11px; cursor: pointer; transition: 0.3s;
+            text-transform: uppercase; letter-spacing: 2px; width: 100%;
+        }
+        .cyber-btn:hover { background: rgba(0, 255, 162, 0.2); box-shadow: 0 0 10px var(--sgcc-neon); }
+        .cyber-btn:disabled { border-color: #555; color: #555; cursor: not-allowed; }
+
+        .spinner {
+            width: 25px; height: 25px; border: 1px solid var(--sgcc-neon);
+            border-top-color: transparent; border-radius: 50%;
+            margin: 20px auto; animation: spin 0.8s linear infinite; display: none;
+        }
+
+        @keyframes spin { 100% { transform: rotate(360deg); } }
         .footer { margin-top: 30px; font-size: 9px; color: rgba(0, 255, 162, 0.3); letter-spacing: 2px; }
     </style>
 </head>
 <body>
     <div class="terminal-card">
         <div class="terminal-header"></div>
+        <div class="logo-box"></div>
+
+        <div id="status_tag" class="status-tag tag-warn">AWAITING_CONFIRMATION</div>
+
+        <h1 id="title">FINAL_AUTHORIZATION</h1>
         
-        <div class="logo-box" id="logo"></div>
+        <div id="msg">
+            > 检测到回滚指令。<br>
+            > 请输入以下短句确认：<br>
+            <span style="color:white; font-weight:bold;">我已确认撤销自动上传的数据</span>
+        </div>
+
+        <div id="confirm-area">
+            <input type="text" id="userInput" class="cyber-input" placeholder="TYPE_HERE..." autocomplete="off">
+            <button id="execBtn" class="cyber-btn">EXECUTE_ROLLBACK</button>
+        </div>
 
         <div id="loader" class="spinner"></div>
-        
-        <div id="status_tag" style="display:none;" class="status-tag"></div>
-
-        <h1 id="title">SYS_INITIALIZING...</h1>
-        <div id="msg">> _正在连接远程电力调度节点...</div>
 
         <div class="footer">ST-GRID RECOVERY UNIT // 2.0</div>
     </div>
 
     <script>
-        async function runRollback() {
+        const TARGET_PHRASE = "我已确认撤销自动上传的数据";
+        const msg = document.getElementById('msg');
+        const tag = document.getElementById('status_tag');
+        const title = document.getElementById('title');
+        const loader = document.getElementById('loader');
+        const confirmArea = document.getElementById('confirm-area');
+        const userInput = document.getElementById('userInput');
+        const execBtn = document.getElementById('execBtn');
+
+        execBtn.addEventListener('click', async () => {
+            const val = userInput.value.trim();
+            
+            if (val !== TARGET_PHRASE) {
+                tag.className = "status-tag tag-error";
+                tag.innerText = "VERIFY_FAILED";
+                msg.innerHTML = "> 短句输入错误。<br>> 指令已被系统拦截。<br>> 提示：必须输入完全一致的确认短句。";
+                userInput.value = "";
+                return;
+            }
+
+            // 验证通过，进入执行流程
+            startExecution();
+        });
+
+        async function startExecution() {
+            confirmArea.style.display = "none";
+            loader.style.display = "block";
+            tag.className = "status-tag tag-warn";
+            tag.innerText = "DECRYPTING_SEQUENCE";
+            title.innerText = "EXECUTING_REMOTE_RPC";
+            msg.innerHTML = "> 凭证已确认。<br>> 正在穿透安全沙箱...<br>> 正在同步节点数据...";
+
             const params = new URLSearchParams(window.location.search);
             const action = params.get('action');
             const id = params.get('id');
-            const tag = document.getElementById('status_tag');
-            const msg = document.getElementById('msg');
-            const title = document.getElementById('title');
 
             if (!id || !action) {
                 updateUI("tag-error", "[ PARAM_MISSING ]", "ERR_ID_NOT_FOUND", "> 无法解析有效的 UUID 凭证。");
@@ -103,7 +156,6 @@
             }
 
             try {
-                await new Promise(r => setTimeout(r, 1000)); // 模拟预检
                 const apiUrl = `https://unywsopjpnerbgmgqqdg.supabase.co/functions/v1/monthly-overdue-updater/rollback/${action}?id=${id}`;
                 const res = await fetch(apiUrl);
                 const data = await res.json();
@@ -119,16 +171,13 @@
         }
 
         function updateUI(className, tagText, titleText, msgHtml) {
-            document.getElementById('loader').style.display = 'none';
-            const tag = document.getElementById('status_tag');
+            loader.style.display = 'none';
             tag.style.display = 'inline-block';
             tag.className = 'status-tag ' + className;
             tag.innerText = tagText;
-            document.getElementById('title').innerText = titleText;
-            document.getElementById('msg').innerHTML = msgHtml;
+            title.innerText = titleText;
+            msg.innerHTML = msgHtml;
         }
-
-        window.onload = runRollback;
     </script>
 </body>
 </html>
