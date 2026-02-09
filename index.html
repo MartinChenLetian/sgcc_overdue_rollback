@@ -3,181 +3,190 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SGCC | 能源数据回滚终端</title>
+    <title>Terminal - SGCC_ROOT</title>
     <style>
         :root {
-            --sgcc-neon: #00ffa2;
-            --sgcc-dark: #050d0c;
+            --terminal-green: #00ffa2;
+            --terminal-bg: #050d0c;
             --error-red: #ff3e3e;
-            --terminal-green: rgba(0, 255, 162, 0.7);
         }
+
+        * { box-sizing: border-box; }
 
         body {
-            background-color: var(--sgcc-dark);
-            background-image: 
-                radial-gradient(circle at 50% 50%, rgba(0, 133, 115, 0.1) 0%, transparent 80%),
-                linear-gradient(rgba(0, 255, 162, 0.02) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(0, 255, 162, 0.02) 1px, transparent 1px);
-            background-size: 100% 100%, 20px 20px, 20px 20px;
-            font-family: "SF Mono", "Monaco", "Consolas", "Microsoft YaHei", monospace;
-            margin: 0; display: flex; justify-content: center; align-items: center; height: 100vh; color: white; overflow: hidden;
+            background-color: var(--terminal-bg);
+            color: var(--terminal-green);
+            font-family: "Courier New", Courier, monospace;
+            margin: 0;
+            padding: 20px;
+            height: 100vh;
+            width: 100vw;
+            display: flex;
+            flex-direction: column;
+            font-size: 18px; /* 字体加大 */
+            line-height: 1.4;
+            overflow: hidden;
         }
 
-        .terminal-card {
-            background: rgba(8, 20, 18, 0.95);
-            padding: 40px;
-            border: 1px solid rgba(0, 255, 162, 0.3);
-            position: relative;
-            text-align: center;
-            width: 340px;
-            box-shadow: 0 0 30px rgba(0, 0, 0, 0.5);
+        /* 扫描线效果 */
+        body::before {
+            content: " ";
+            display: block;
+            position: absolute;
+            top: 0; left: 0; bottom: 0; right: 0;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+            z-index: 2;
+            background-size: 100% 2px, 3px 100%;
+            pointer-events: none;
         }
 
-        .terminal-header {
-            position: absolute; top: 0; left: 0; width: 100%; height: 4px;
-            background: repeating-linear-gradient(90deg, var(--sgcc-neon), var(--sgcc-neon) 10px, transparent 10px, transparent 20px);
-            opacity: 0.6;
+        #console {
+            flex-grow: 1;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            word-break: break-all;
         }
 
-        .logo-box {
-            width: 180px; height: 60px; margin: 0 auto 25px;
-            background-color: var(--sgcc-neon);
-            -webkit-mask: url('./state-grid.svg') no-repeat center / contain;
-            mask: url('./state-grid.svg') no-repeat center / contain;
-            filter: drop-shadow(0 0 8px var(--sgcc-neon));
+        .input-line {
+            display: flex;
+            align-items: center;
+            margin-top: 10px;
         }
 
-        /* 状态显示 */
-        .status-tag {
-            display: inline-block; padding: 4px 12px; font-size: 10px; font-weight: bold;
-            letter-spacing: 2px; border: 1px solid; margin-bottom: 20px; text-transform: uppercase;
-        }
-        .tag-success { color: var(--sgcc-neon); border-color: var(--sgcc-neon); background: rgba(0, 255, 162, 0.1); }
-        .tag-error { color: var(--error-red); border-color: var(--error-red); background: rgba(255, 62, 62, 0.1); }
-        .tag-warn { color: #f39c12; border-color: #f39c12; background: rgba(243, 156, 18, 0.1); }
-
-        h1 { font-size: 14px; letter-spacing: 2px; color: #fff; margin: 10px 0; font-weight: normal; }
-        #msg { 
-            color: var(--terminal-green); font-size: 11px; line-height: 1.6; text-align: left; 
-            padding: 15px; background: rgba(0,0,0,0.5); border: 1px solid rgba(0, 255, 162, 0.1);
-            border-radius: 2px; min-height: 50px; margin-bottom: 20px;
+        #prompt {
+            margin-right: 10px;
+            white-space: nowrap;
+            color: #fff;
         }
 
-        /* 输入确认区 */
-        #confirm-area { display: block; }
-        .cyber-input {
-            width: 100%; background: transparent; border: none; border-bottom: 1px solid var(--sgcc-neon);
-            color: var(--sgcc-neon); font-family: inherit; font-size: 11px; padding: 8px 0;
-            outline: none; margin-bottom: 15px;
-        }
-        .cyber-btn {
-            background: transparent; border: 1px solid var(--sgcc-neon); color: var(--sgcc-neon);
-            padding: 8px 20px; font-size: 11px; cursor: pointer; transition: 0.3s;
-            text-transform: uppercase; letter-spacing: 2px; width: 100%;
-        }
-        .cyber-btn:hover { background: rgba(0, 255, 162, 0.2); box-shadow: 0 0 10px var(--sgcc-neon); }
-        .cyber-btn:disabled { border-color: #555; color: #555; cursor: not-allowed; }
-
-        .spinner {
-            width: 25px; height: 25px; border: 1px solid var(--sgcc-neon);
-            border-top-color: transparent; border-radius: 50%;
-            margin: 20px auto; animation: spin 0.8s linear infinite; display: none;
+        #userInput {
+            background: transparent;
+            border: none;
+            color: var(--terminal-green);
+            font-family: inherit;
+            font-size: inherit;
+            outline: none;
+            flex-grow: 1;
+            caret-shape: block;
         }
 
-        @keyframes spin { 100% { transform: rotate(360deg); } }
-        .footer { margin-top: 30px; font-size: 9px; color: rgba(0, 255, 162, 0.3); letter-spacing: 2px; }
+        .system-msg { color: #888; }
+        .success { color: var(--terminal-green); text-shadow: 0 0 5px var(--terminal-green); }
+        .error { color: var(--error-red); }
+        
+        /* 隐藏滚动条 */
+        ::-webkit-scrollbar { width: 0; }
+
+        .logo-ascii {
+            font-size: 10px;
+            line-height: 1;
+            margin-bottom: 20px;
+            opacity: 0.7;
+        }
     </style>
 </head>
-<body>
-    <div class="terminal-card">
-        <div class="terminal-header"></div>
-        <div class="logo-box"></div>
+<body onclick="document.getElementById('userInput').focus()">
 
-        <div id="status_tag" class="status-tag tag-warn">AWAITING_CONFIRMATION</div>
+<div id="console">
+<div class="logo-ascii">
+ ██████  ██████  ██████  ██████
+ ██      ██      ██      ██    
+ █████   ██ ███  ██      ██    
+      ██ ██   ██ ██      ██    
+ ██████   ██████  ██████  ██████
+ -------------------------------
+ [ ENERGY DATA RECOVERY SYSTEM ]
+</div>
+<div class="system-msg">Last login: <span id="time"></span> on ttys001</div>
+<div class="system-msg">Security Level: Level 4 (Classified)</div>
+<br>
+<div>> ⚠ 警告: 检测到数据库回退请求。</div>
+<div>> 验证要求: 输入确认短句方可获得执行权限。</div>
+<div style="color:#fff;">> 请输入: <span style="text-decoration: underline;">我已确认撤销自动上传的数据</span></div>
+</div>
 
-        <h1 id="title">FINAL_AUTHORIZATION</h1>
-        
-        <div id="msg">
-            > 检测到回滚指令。<br>
-            > 请输入以下短句确认：<br>
-            <span style="color:white; font-weight:bold;">我已确认撤销自动上传的数据</span>
-        </div>
+<div class="input-line" id="inputContainer">
+    <span id="prompt"></span>
+    <input type="text" id="userInput" autofocus spellcheck="false" autocomplete="off">
+</div>
 
-        <div id="confirm-area">
-            <input type="text" id="userInput" class="cyber-input" placeholder="TYPE_HERE..." autocomplete="off">
-            <button id="execBtn" class="cyber-btn">EXECUTE_ROLLBACK</button>
-        </div>
+<script>
+    const TARGET_PHRASE = "我已确认撤销自动上传的数据";
+    const consoleEl = document.getElementById('console');
+    const userInput = document.getElementById('userInput');
+    const promptEl = document.getElementById('prompt');
+    const timeEl = document.getElementById('time');
 
-        <div id="loader" class="spinner"></div>
+    // 模拟不同系统的 Prompt 和 报错信息
+    const isWin = navigator.platform.toUpperCase().indexOf('WIN') > -1;
+    const promptChar = isWin ? "C:\\Users\\Admin> " : "root@SGCC-GATEWAY ~ % ";
+    const errorMsg = isWin ? "'{cmd}' 不是内部或外部命令，也不是可运行的程序或批处理文件。" : "zsh: command not found: {cmd}";
 
-        <div class="footer">ST-GRID RECOVERY UNIT // 2.0</div>
-    </div>
+    promptEl.innerText = promptChar;
+    timeEl.innerText = new Date().toLocaleString();
 
-    <script>
-        const TARGET_PHRASE = "我已确认撤销自动上传的数据";
-        const msg = document.getElementById('msg');
-        const tag = document.getElementById('status_tag');
-        const title = document.getElementById('title');
-        const loader = document.getElementById('loader');
-        const confirmArea = document.getElementById('confirm-area');
-        const userInput = document.getElementById('userInput');
-        const execBtn = document.getElementById('execBtn');
+    function print(text, className = "") {
+        const div = document.createElement('div');
+        div.className = className;
+        div.innerText = text;
+        consoleEl.appendChild(div);
+        consoleEl.scrollTop = consoleEl.scrollHeight;
+    }
 
-        execBtn.addEventListener('click', async () => {
+    userInput.addEventListener('keydown', async (e) => {
+        if (e.key === 'Enter') {
             const val = userInput.value.trim();
+            print(promptChar + val);
+            userInput.value = "";
+
+            if (val === TARGET_PHRASE) {
+                await executeRollback();
+            } else if (val === "") {
+                // Do nothing
+            } else {
+                print(errorMsg.replace("{cmd}", val), "error");
+            }
+        }
+    });
+
+    async function executeRollback() {
+        userInput.disabled = true;
+        document.getElementById('inputContainer').style.display = "none";
+        
+        print("\n> [CRITICAL] 权限验证通过...");
+        print("> 正在建立对等连接 (P2P)...");
+        
+        await new Promise(r => setTimeout(r, 800));
+        
+        const params = new URLSearchParams(window.location.search);
+        const action = params.get('action');
+        const id = params.get('id');
+
+        if (!id || !action) {
+            print("> ERROR: 凭证解析失败。执行终止。", "error");
+            return;
+        }
+
+        try {
+            print("> 发送 RPC 指令至集群...");
+            const apiUrl = `https://unywsopjpnerbgmgqqdg.supabase.co/functions/v1/monthly-overdue-updater/rollback/${action}?id=${id}`;
+            const res = await fetch(apiUrl);
+            const data = await res.json();
             
-            if (val !== TARGET_PHRASE) {
-                tag.className = "status-tag tag-error";
-                tag.innerText = "VERIFY_FAILED";
-                msg.innerHTML = "> 短句输入错误。<br>> 指令已被系统拦截。<br>> 提示：必须输入完全一致的确认短句。";
-                userInput.value = "";
-                return;
+            if (data.status === 'success') {
+                print("\n[ ACCESS GRANTED ]", "success");
+                print(`> 指令执行成功。`);
+                print(`> 影响行数: ${data.affected_rows}`);
+                print(`> 正在同步集群状态... OK`);
+                print(`> 本次 Session 已安全结束。`);
+            } else {
+                throw new Error(data.message || "REJECTED_BY_HOST");
             }
-
-            // 验证通过，进入执行流程
-            startExecution();
-        });
-
-        async function startExecution() {
-            confirmArea.style.display = "none";
-            loader.style.display = "block";
-            tag.className = "status-tag tag-warn";
-            tag.innerText = "DECRYPTING_SEQUENCE";
-            title.innerText = "EXECUTING_REMOTE_RPC";
-            msg.innerHTML = "> 凭证已确认。<br>> 正在穿透安全沙箱...<br>> 正在同步节点数据...";
-
-            const params = new URLSearchParams(window.location.search);
-            const action = params.get('action');
-            const id = params.get('id');
-
-            if (!id || !action) {
-                updateUI("tag-error", "[ PARAM_MISSING ]", "ERR_ID_NOT_FOUND", "> 无法解析有效的 UUID 凭证。");
-                return;
-            }
-
-            try {
-                const apiUrl = `https://unywsopjpnerbgmgqqdg.supabase.co/functions/v1/monthly-overdue-updater/rollback/${action}?id=${id}`;
-                const res = await fetch(apiUrl);
-                const data = await res.json();
-                
-                if (data.status === 'success') {
-                    updateUI("tag-success", "[ ACCESS_GRANTED ]", "ROLLBACK_SUCCESS", `> 远程指令校验成功。<br>> 受影响记录: ${data.affected_rows}<br>> 凭证生命周期已终止。`);
-                } else {
-                    throw new Error(data.message || "REMOTE_REJECTED");
-                }
-            } catch (err) {
-                updateUI("tag-error", "[ AUTH_FAILURE ]", "DECRYPTION_FAILED", `> 拒绝访问: ${err.message}`);
-            }
+        } catch (err) {
+            print("\n[ FAILED ]", "error");
+            print(`> 执行异常: ${err.message}`, "error");
         }
-
-        function updateUI(className, tagText, titleText, msgHtml) {
-            loader.style.display = 'none';
-            tag.style.display = 'inline-block';
-            tag.className = 'status-tag ' + className;
-            tag.innerText = tagText;
-            title.innerText = titleText;
-            msg.innerHTML = msgHtml;
-        }
-    </script>
+    }
+</script>
 </body>
 </html>
