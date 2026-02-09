@@ -3,116 +3,194 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
-    <title>SGCC_RECOVERY_NODE_762</title>
+    <title>TERMINAL_SESSION_INIT</title>
     <style>
-        :root { --green: #00ffa2; --dim-green: rgba(0, 255, 162, 0.6); --bg: #030807; }
-        body { background: var(--bg); color: var(--green); font-family: "Lucida Console", Monaco, monospace; margin: 0; padding: 15px; font-size: 16px; overflow: hidden; }
+        :root {
+            --terminal-green: #00ffa2;
+            --terminal-bg: #050d0c;
+            --error-red: #ff3e3e;
+            --cursor-bg: #00ffa2;
+        }
+
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+        body {
+            background-color: var(--terminal-bg);
+            color: var(--terminal-green);
+            font-family: "Lucida Console", "Consolas", Monaco, monospace;
+            margin: 0; padding: 25px;
+            font-size: 18px; line-height: 1.5;
+            min-height: 100vh; overflow-x: hidden;
+            word-break: break-all;
+        }
+
+        /* CRT 屏幕特效 */
+        body::after {
+            content: " "; display: block; position: fixed; top: 0; left: 0; bottom: 0; right: 0;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%), 
+                        linear-gradient(90deg, rgba(255, 0, 0, 0.02), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.02));
+            z-index: 1000; background-size: 100% 3px, 3px 100%; pointer-events: none;
+        }
+
+        #terminal-history { display: inline; }
+
+        .line { margin-bottom: 4px; min-height: 1.5em; }
+        .sys-dim { color: rgba(0, 255, 162, 0.4); font-size: 14px; }
+        .success { color: #fff; text-shadow: 0 0 8px var(--terminal-green); }
+        .error { color: var(--error-red); }
+
+        /* 输入行样式 */
+        #input-row { display: inline-flex; width: 100%; align-items: flex-start; }
+        #prompt { white-space: nowrap; margin-right: 8px; color: #fff; font-weight: bold; }
         
-        /* 扫描线和噪点 */
-        .crt-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03)); background-size: 100% 3px, 3px 100%; pointer-events: none; z-index: 100; }
+        #cli {
+            background: transparent; border: none; color: var(--terminal-green);
+            font-family: inherit; font-size: inherit; outline: none;
+            flex: 1; padding: 0; margin: 0;
+            caret-color: var(--cursor-bg); /* 模拟光标 */
+        }
+
+        /* 禁止选择 */
+        body { user-select: none; -webkit-user-select: none; cursor: default; }
         
-        #output { height: calc(100vh - 60px); overflow-y: auto; white-space: pre-wrap; word-break: break-all; scroll-behavior: smooth; }
-        .prompt-line { display: flex; align-items: center; border-top: 1px solid rgba(0,255,162,0.1); padding-top: 10px; }
-        input { background: transparent; border: none; color: #fff; font-family: inherit; font-size: 18px; outline: none; flex: 1; caret-color: var(--green); }
-        
-        .sys-info { color: #555; font-size: 12px; }
-        .warn { color: #fff; font-weight: bold; background: #c0392b; padding: 0 5px; }
-        .cmd-error { color: #ff3e3e; }
-        
+        /* 隐藏滚动条 */
         ::-webkit-scrollbar { width: 0; }
     </style>
 </head>
-<body onclick="document.getElementById('cli').focus()">
-    <div class="crt-overlay"></div>
-    <div id="output"><div class="sys-info">
-[BOOT] SGCC_SECURE_OS v4.2.0-STABLE
-[INFO] NODE_LOCATION: SG-NUS-CLUSTER
-[INFO] ENCRYPTION: AES-256-GCM ACTIVE
---------------------------------------------------</div>
-> ⚠ <span class="warn">CRITICAL ACCESS</span>
-> 系统已进入三级数据恢复状态。
-> 正在检索本次更新生成的唯一授权序列...
-> 验证要求: 输入下列指令以确认撤销行为:
-> "<span style="color:#fff">我已确认撤销自动上传的数据</span>"
-</div>
+<body oncontextmenu="return false" onselectstart="return false">
 
-    <div class="prompt-line">
-        <span id="prefix" style="color:#fff; margin-right:8px;"></span>
-        <input type="text" id="cli" autofocus autocomplete="off" spellcheck="false">
+    <div id="output">
+        <div id="terminal-history"></div>
+        <div id="input-row" style="display: none;">
+            <span id="prompt"></span>
+            <input type="text" id="cli" autofocus autocomplete="off" 
+                   autocorrect="off" autocapitalize="off" spellcheck="false">
+        </div>
     </div>
 
 <script>
-    const output = document.getElementById('output');
-    const cli = document.getElementById('cli');
-    const prefix = document.getElementById('prefix');
     const TARGET = "我已确认撤销自动上传的数据";
+    const history = document.getElementById('terminal-history');
+    const inputRow = document.getElementById('input-row');
+    const cli = document.getElementById('cli');
+    const promptEl = document.getElementById('prompt');
 
-    // 动态模拟环境
-    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-    const platformPrefix = isMobile ? "sgcc@remote_node:~ $" : "C:\\SYS\\SGCC\\DATA>";
-    const notFound = isMobile ? "zsh: command not found: " : "不是内部或外部命令，也不是可运行的程序: ";
-    prefix.innerText = platformPrefix;
+    // 1. 系统环境识别
+    const isWin = navigator.userAgent.toUpperCase().indexOf('WINDOWS') > -1;
+    const promptStr = isWin ? "C:\\Users\\Administrator> " : "root@sgcc-gateway:~# ";
+    const cmdError = isWin ? "'{cmd}' 不是内部或外部命令，也不是可运行的程序。" : "zsh: command not found: {cmd}";
+    promptEl.innerText = promptStr;
 
-    function log(msg, type = "") {
-        const line = document.createElement('div');
-        if(type) line.className = type;
-        line.innerHTML = msg;
-        output.appendChild(line);
-        output.scrollTop = output.scrollHeight;
+    // 2. 封杀所有干扰快捷键
+    window.addEventListener('keydown', (e) => {
+        // 阻止 F12, Ctrl+Shift+I, Ctrl+U, Ctrl+S
+        if (e.keyCode === 123 || (e.ctrlKey && e.shiftKey && e.keyCode === 73) || (e.ctrlKey && e.keyCode === 85) || (e.ctrlKey && e.keyCode === 83)) {
+            e.preventDefault();
+            return false;
+        }
+    }, false);
+
+    // 保持焦点
+    document.body.addEventListener('click', () => cli.focus());
+
+    // 3. 初始化闪烁序列
+    const bootSequence = [
+        { t: "[ BIOS ] Version 2.19.1242. (C) 2026 SGCC Energy.", s: 0, class: "sys-dim" },
+        { t: "[ OK ] CPU: ARM v9 Neoverse-V2 Cluster detected.", s: 200, class: "sys-dim" },
+        { t: "[ OK ] MEMORY: 128GB ECC-RAM Initialized.", s: 100, class: "sys-dim" },
+        { t: "[ OK ] NETWORK: Remote Node SG-NUS-LINK Active.", s: 300, class: "sys-dim" },
+        { t: " ", s: 100 },
+        { t: "SGCC Secure Terminal (Session: " + Math.random().toString(36).substring(2, 10).toUpperCase() + ")", s: 100, class: "success" },
+        { t: "Last Login: " + new Date().toLocaleString() + " from 172.19.0.42", s: 100 },
+        { t: "--------------------------------------------------", s: 100 },
+        { t: "> CRITICAL: 数据回滚授权待定。", s: 400 },
+        { t: "> 请输入确认短句以验证身份:", s: 100 },
+        { t: "> \"我已确认撤销自动上传的数据\"", s: 100, class: "success" },
+        { t: " ", s: 200 }
+    ];
+
+    async function initTerminal() {
+        for (const line of bootSequence) {
+            await new Promise(r => setTimeout(r, line.s));
+            const div = document.createElement('div');
+            div.className = "line " + (line.class || "");
+            div.innerText = line.t;
+            history.appendChild(div);
+            window.scrollTo(0, document.body.scrollHeight);
+        }
+        inputRow.style.display = "inline-flex";
+        cli.focus();
     }
 
+    // 4. 输入交互逻辑
     cli.addEventListener('keydown', async (e) => {
         if (e.key === 'Enter') {
-            const cmd = cli.value.trim();
-            log(`${platformPrefix} ${cmd}`);
+            const val = cli.value.trim();
+            
+            // 将当前输入存入历史
+            const historyLine = document.createElement('div');
+            historyLine.className = "line";
+            historyLine.innerHTML = `<span style="color:#fff;font-weight:bold;">${promptStr}</span>${val}`;
+            history.appendChild(historyLine);
+            
             cli.value = "";
+            inputRow.style.display = "none";
 
-            if (cmd === TARGET) {
-                await runSequence();
-            } else if (cmd !== "") {
-                log(`${notFound}${cmd}`, "cmd-error");
+            if (val === TARGET) {
+                await executeRollback();
+            } else if (val !== "") {
+                const errLine = document.createElement('div');
+                errLine.className = "line error";
+                errLine.innerText = cmdError.replace("{cmd}", val);
+                history.appendChild(errLine);
+                inputRow.style.display = "inline-flex";
+            } else {
+                inputRow.style.display = "inline-flex";
             }
+            window.scrollTo(0, document.body.scrollHeight);
         }
     });
 
-    async function runSequence() {
-        cli.disabled = true;
-        log("\n[SYSTEM] 身份验证通过。正在初始化回滚序列...");
-        
-        // 模拟打字机进度
-        const steps = [
-            "> 正在请求令牌授权...",
-            "> 正在连接 Supabase 边缘节点...",
-            "> 正在穿透安全防火墙...",
-            "> 发送指令: RPC_CALL_ROLLBACK_ST_ND"
-        ];
-        
-        for(let step of steps) {
-            await new Promise(r => setTimeout(r, 600));
-            log(step);
-        }
-
+    async function executeRollback() {
         const params = new URLSearchParams(window.location.search);
         const action = params.get('action');
         const id = params.get('id');
+
+        const log = (text, cls = "") => {
+            const d = document.createElement('div');
+            d.className = "line " + cls;
+            d.innerText = text;
+            history.appendChild(d);
+            window.scrollTo(0, document.body.scrollHeight);
+        };
+
+        log("\n[ PROCESS ] 授权码验证中...");
+        await new Promise(r => setTimeout(r, 800));
+        log("[ PROCESS ] 正在穿透边缘网关...");
+        await new Promise(r => setTimeout(r, 600));
 
         try {
             const res = await fetch(`https://unywsopjpnerbgmgqqdg.supabase.co/functions/v1/monthly-overdue-updater/rollback/${action}?id=${id}`);
             const data = await res.json();
 
             if (data.status === 'success') {
-                log("\n--------------------------------------------------");
-                log("[ SUCCESS ] 指令已生效", "success");
-                log(`> 数据库变动: ${data.affected_rows} 行已恢复`);
-                log(`> 授权码 ID_${id.split('-')[0]} 已作废`);
-                log("--------------------------------------------------");
+                log("\n-------------------------------------------");
+                log(">>> ACCESS GRANTED", "success");
+                log(`> 数据库操作已撤回 (受影响行数: ${data.affected_rows})`);
+                log(`> 任务 ID: ${id.split('-')[0]} 已作废`);
+                log("> Session Closed. 安全退出中...");
+                log("-------------------------------------------");
             } else {
-                throw new Error(data.message);
+                throw new Error(data.message || "REJECTED_BY_SERVER");
             }
         } catch (err) {
-            log(`\n[ FATAL ERROR ] 执行失败: ${err.message}`, "cmd-error");
+            log(`\n[ FATAL ] 执行中止: ${err.message}`, "error");
+            log("> 请联系系统管理员或重新发起同步流程。", "sys-dim");
+            inputRow.style.display = "inline-flex";
         }
     }
+
+    window.onload = initTerminal;
 </script>
 </body>
 </html>
